@@ -1,0 +1,6 @@
+name,sku,category,unit_price,cost_price,stock_qty,reorder_threshold
+Indomie Chicken 70g,IND-CHK-70,Noodles,150,90,200,30
+Peak Milk Powder 400g,PKM-400,Dairy,2800,2000,50,10
+Gala Sausage Roll,GALA-001,Snacks,100,60,150,25
+Milo Sachet 20g,MILO-20,Beverages,120,85,300,50
+Dangote Sugar 1kg,DAN-SUG-1,Provisions,1100,850,40,12
