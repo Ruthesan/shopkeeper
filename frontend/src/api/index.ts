@@ -164,8 +164,13 @@ export const importCSV = async (file: File) => {
 }
 
 // ── Sales ─────────────────────────────────────────────────────────────────────
-export const getSales    = ()                                                                          => req<Sale[]>('/sales/')
-export const recordSale  = (d: { product_id: number; qty_sold: number; sale_price: number })           => req('/sales/', { method: 'POST', body: JSON.stringify(d) })
+export const getSales   = () => req<Sale[]>('/sales/')
+export const recordSale = (d: {
+  product_id:     number
+  qty_sold:       number
+  sale_price:     number
+  payment_method?: string   // Feature 1 — optional, defaults to "Cash" on backend
+}) => req('/sales/', { method: 'POST', body: JSON.stringify(d) })
 
 // ── Alerts ────────────────────────────────────────────────────────────────────
 export const getAlerts    = () => req<Alert[]>('/alerts/')

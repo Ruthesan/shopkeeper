@@ -76,12 +76,16 @@ class Product(Base):
 class Sale(Base):
     __tablename__ = "sales"
 
-    id         = Column(Integer, primary_key=True, index=True)
-    shop_id    = Column(Integer, ForeignKey("shops.id"),    nullable=False)
-    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
-    qty_sold   = Column(Integer, nullable=False)
-    sale_price = Column(Numeric(12, 2), nullable=False)
-    sold_at    = Column(DateTime(timezone=True), server_default=func.now())
+    id             = Column(Integer, primary_key=True, index=True)
+    shop_id        = Column(Integer, ForeignKey("shops.id"),    nullable=False)
+    product_id     = Column(Integer, ForeignKey("products.id"), nullable=False)
+    qty_sold       = Column(Integer, nullable=False)
+    sale_price     = Column(Numeric(12, 2), nullable=False)
+    # Feature 1: payment method tracking
+    # Allowed values: "Cash" | "Bank Transfer" | "POS Card"
+    # Defaults to "Cash" so all existing rows remain valid after migration.
+    payment_method = Column(String(50), nullable=False, server_default="Cash", default="Cash")
+    sold_at        = Column(DateTime(timezone=True), server_default=func.now())
 
     shop    = relationship("Shop",    back_populates="sales")
     product = relationship("Product", back_populates="sales")

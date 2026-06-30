@@ -30,6 +30,7 @@ def record_sale(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    # Ownership check — product must belong to this shop (prevents cross-tenant writes)
     product = db.query(Product).filter_by(
         id=payload.product_id, shop_id=current_user.shop_id
     ).first()
@@ -39,14 +40,16 @@ def record_sale(
     if product.stock_qty < payload.qty_sold:
         raise HTTPException(
             status_code=400,
-            detail=f"Insufficient stock. Available: {product.stock_qty}"
+            detail=f"Insufficient stock. Available: {product.stock_qty}",
         )
 
+    # Feature 1: persist payment_method alongside the sale
     sale = Sale(
         shop_id=current_user.shop_id,
         product_id=payload.product_id,
         qty_sold=payload.qty_sold,
         sale_price=payload.sale_price,
+        payment_method=payload.payment_method,
     )
     db.add(sale)
 
@@ -74,4 +77,9 @@ def record_sale(
 
     db.commit()
     db.refresh(sale)
-    return {"message": "Sale recorded", "new_stock": product.stock_qty, "sale_id": sale.id}
+    return {
+        "message":        "Sale recorded",
+        "new_stock":      product.stock_qty,
+        "sale_id":        sale.id,
+        "payment_method": sale.payment_method,
+    }

@@ -9,8 +9,7 @@ import { useAuth } from '../context/AuthContext'
 
 interface Props { onNavigate: (page: any) => void }
 
-const fmt = (n: number) =>
-  `₦${n.toLocaleString('en-NG', { maximumFractionDigits: 0 })}`
+const fmt = (n: number) => `₦${n.toLocaleString('en-NG', { maximumFractionDigits: 0 })}`
 
 const CHART_STYLE = {
   contentStyle: {
@@ -20,8 +19,8 @@ const CHART_STYLE = {
     fontSize: 12,
     fontFamily: "'Inter', sans-serif",
   },
-  labelStyle:   { color: '#8fa3c0', fontSize: 12 },
-  itemStyle:    { color: '#e8edf5' },
+  labelStyle: { color: '#8fa3c0', fontSize: 12 },
+  itemStyle:  { color: '#e8edf5' },
 }
 
 export default function Dashboard({ onNavigate }: Props) {
@@ -40,6 +39,12 @@ export default function Dashboard({ onNavigate }: Props) {
     weekday: 'long', month: 'long', day: 'numeric',
   })
 
+  // Feature 2: profit margin % for the month
+  const profitMarginPct =
+    summary && summary.revenue_month > 0
+      ? ((summary.profit_month / summary.revenue_month) * 100).toFixed(1)
+      : null
+
   return (
     <div className="gap-24">
 
@@ -48,27 +53,61 @@ export default function Dashboard({ onNavigate }: Props) {
         <div>
           <h1 className="page-title">Dashboard</h1>
           <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>
-            Welcome back, <span style={{ color: 'var(--text-dim)', fontWeight: 500 }}>{user?.full_name?.split(' ')[0]}</span>
+            Welcome back,{' '}
+            <span style={{ color: 'var(--text-dim)', fontWeight: 500 }}>
+              {user?.full_name?.split(' ')[0]}
+            </span>
             &nbsp;· {today}
           </div>
         </div>
       </div>
 
-      {/* Stat cards */}
+      {/* Stat cards — Feature 2: profit_today and profit_month added */}
       <div className="stat-grid">
         {[
-          { label: 'Revenue Today',      value: summary ? fmt(summary.revenue_today)  : '—', cls: 'naira' },
-          { label: 'Revenue This Month', value: summary ? fmt(summary.revenue_month)  : '—', cls: 'naira' },
-          { label: 'Total Products',     value: summary?.total_products ?? '—',                cls: '' },
+          {
+            label: 'Revenue Today',
+            value: summary ? fmt(summary.revenue_today) : '—',
+            cls: 'naira',
+          },
+          {
+            label: 'Revenue This Month',
+            value: summary ? fmt(summary.revenue_month) : '—',
+            cls: 'naira',
+          },
+          {
+            label: 'Profit Today',
+            value: summary ? fmt(summary.profit_today) : '—',
+            cls: summary && summary.profit_today >= 0 ? 'naira' : 'danger',
+            sub: null,
+          },
+          {
+            label: 'Profit This Month',
+            value: summary ? fmt(summary.profit_month) : '—',
+            cls: summary && summary.profit_month >= 0 ? 'naira' : 'danger',
+            sub: profitMarginPct ? `${profitMarginPct}% margin` : null,
+          },
+          {
+            label: 'Total Products',
+            value: summary?.total_products ?? '—',
+            cls: '',
+            sub: null,
+          },
           {
             label: 'Low Stock Items',
             value: summary?.low_stock_count ?? '—',
             cls: summary && summary.low_stock_count > 0 ? 'warning' : '',
+            sub: null,
           },
-        ].map(({ label, value, cls }) => (
+        ].map(({ label, value, cls, sub }) => (
           <div className="stat-card" key={label}>
             <div className="stat-label">{label}</div>
             <div className={`stat-value ${cls}`}>{value}</div>
+            {sub && (
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>
+                {sub}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -88,6 +127,10 @@ export default function Dashboard({ onNavigate }: Props) {
                   <stop offset="5%"  stopColor="#4f8ef7" stopOpacity={0.22} />
                   <stop offset="95%" stopColor="#4f8ef7" stopOpacity={0} />
                 </linearGradient>
+                <linearGradient id="profitGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor="#34d97b" stopOpacity={0.18} />
+                  <stop offset="95%" stopColor="#34d97b" stopOpacity={0} />
+                </linearGradient>
               </defs>
               <CartesianGrid stroke="#1e2a3d" strokeDasharray="4 4" />
               <XAxis
@@ -102,19 +145,39 @@ export default function Dashboard({ onNavigate }: Props) {
               />
               <Tooltip
                 {...CHART_STYLE}
-                formatter={(v: number) => [fmt(v), 'Revenue']}
+                formatter={(v: number, name: string) => [
+                  fmt(v),
+                  name === 'revenue' ? 'Revenue' : 'Profit',
+                ]}
+              />
+              {/* Feature 2: profit line on the same chart */}
+              <Area
+                type="monotone" dataKey="profit"
+                stroke="#34d97b" fill="url(#profitGrad)"
+                strokeWidth={2} dot={false}
+                activeDot={{ r: 4, fill: '#34d97b', strokeWidth: 0 }}
               />
               <Area
-                type="monotone"
-                dataKey="revenue"
-                stroke="#4f8ef7"
-                fill="url(#revGrad)"
-                strokeWidth={2.5}
-                dot={false}
+                type="monotone" dataKey="revenue"
+                stroke="#4f8ef7" fill="url(#revGrad)"
+                strokeWidth={2.5} dot={false}
                 activeDot={{ r: 4, fill: '#4f8ef7', strokeWidth: 0 }}
               />
             </AreaChart>
           </ResponsiveContainer>
+        )}
+        {chart.length > 0 && (
+          <div style={{ display: 'flex', gap: 20, marginTop: 12 }}>
+            {[
+              { color: '#4f8ef7', label: 'Revenue' },
+              { color: '#34d97b', label: 'Profit' },
+            ].map(({ color, label }) => (
+              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-muted)' }}>
+                <div style={{ width: 24, height: 3, background: color, borderRadius: 2 }} />
+                {label}
+              </div>
+            ))}
+          </div>
         )}
       </div>
 

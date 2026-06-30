@@ -335,7 +335,8 @@ export default function AuthPage() {
           marginTop: 22,
           lineHeight: 1.7,
         }}>
-          Your data is fully private- Each shop owner sees only their own inventory.
+          Your data is fully private.<br />
+          Each shop owner sees only their own inventory.
         </p>
       </div>
     </div>
